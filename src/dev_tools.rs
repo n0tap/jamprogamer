@@ -4,11 +4,11 @@ use bevy::{dev_tools::states::log_transitions, prelude::*};
 
 use crate::screen::Screen;
 
-#[cfg(test)]
+#[cfg(feature = "dev")]
 use bevy_inspector_egui;
 //#[cfg(feature = "dev")]
 //use bevy_inspector_egui::quick::WorldInspectorPlugin;
-#[cfg(test)]
+#[cfg(feature = "dev")]
 pub(super) fn plugin(app: &mut App) {
     // Print state transitions in dev builds
     app.add_systems(Update, log_transitions::<Screen>);
