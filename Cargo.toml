@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.14", features = ["wayland"] }
-bevy-inspector-egui = "0.25.1"
 # Disable low-severity logs at compile time for performance.
 log = { version = "0.4", features = [
     "max_level_debug",
@@ -14,6 +13,8 @@ log = { version = "0.4", features = [
 ] }
 rand = "0.8"
 
+[dev-dependencies]
+bevy-inspector-egui = "0.25.1"
 
 [features]
 default = [
