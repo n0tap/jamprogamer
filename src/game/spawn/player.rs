@@ -5,8 +5,8 @@ use bevy::prelude::*;
 use crate::{
     game::{
         animation::PlayerAnimation,
-        assets::{HandleMap, ImageKey},
-        movement::{Movement, MovementController, WrapWithinWindow},
+        assets::{HandleMap, ImageKey,MeshKey,MaterialKey,SceneKey},
+        movement::{Movement, MovementController},
     },
     screen::Screen,
 };
@@ -26,8 +26,10 @@ pub struct Player;
 fn spawn_player(
     _trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
-    image_handles: Res<HandleMap<ImageKey>>,
+    mesh_handles: Res<HandleMap<MeshKey>>,
+    material_handles: Res<HandleMap<MaterialKey>>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    scene_handles: Res<HandleMap<SceneKey>>,
 ) {
     // A texture atlas is a way to split one image with a grid into multiple sprites.
     // By attaching it to a [`SpriteBundle`] and providing an index, we can specify which section of the image we want to see.
@@ -37,22 +39,34 @@ fn spawn_player(
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
     let player_animation = PlayerAnimation::new();
 
+//   commands.spawn((
+//       Name::new("Player"),
+//       Player,
+//       SpriteBundle {
+//           texture: image_handles[&ImageKey::Ducky].clone_weak(),
+//           transform: Transform::from_scale(Vec2::splat(8.0).extend(1.0)),
+//           ..Default::default()
+//       },
+//       TextureAtlas {
+//           layout: texture_atlas_layout.clone(),
+//           index: player_animation.get_atlas_index(),
+//       },
+//       MovementController::default(),
+//       Movement { speed: 420.0 },
+//       WrapWithinWindow,
+//       player_animation,
+//       StateScoped(Screen::Playing),
+//   ));
     commands.spawn((
         Name::new("Player"),
-        Player,
-        SpriteBundle {
-            texture: image_handles[&ImageKey::Ducky].clone_weak(),
-            transform: Transform::from_scale(Vec2::splat(8.0).extend(1.0)),
+        SceneBundle{
+            scene:scene_handles[&SceneKey::Character].clone_weak(),
+            transform:Transform::from_translation(Vec3::new(-2.0,0.0,-2.0)),
             ..Default::default()
         },
-        TextureAtlas {
-            layout: texture_atlas_layout.clone(),
-            index: player_animation.get_atlas_index(),
-        },
         MovementController::default(),
-        Movement { speed: 420.0 },
-        WrapWithinWindow,
-        player_animation,
+        Movement { speed: 2.8, rotation:3.0 },
         StateScoped(Screen::Playing),
+        Player,
     ));
 }

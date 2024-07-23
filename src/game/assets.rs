@@ -13,7 +13,86 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<SoundtrackKey>>();
     app.init_resource::<HandleMap<SoundtrackKey>>();
+
+    app.register_type::<HandleMap<MeshKey>>();
+    app.init_resource::<HandleMap<MeshKey>>();
+
+    app.register_type::<HandleMap<MaterialKey>>();
+    app.init_resource::<HandleMap<MaterialKey>>();
+
+    app.register_type::<HandleMap<SceneKey>>();
+    app.init_resource::<HandleMap<SceneKey>>();
 }
+
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum SceneKey {
+    Character,
+}
+
+impl AssetKey for SceneKey {
+    type Asset = Scene;
+}
+
+impl FromWorld for HandleMap<SceneKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (SceneKey::Character,asset_server.load(GltfAssetLabel::Scene(0).from_asset("meshes/jamchar.glb")))
+
+        ]
+        .into()
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum MaterialKey {
+    Red,
+    Green,
+    Blue,
+}
+
+impl AssetKey for MaterialKey {
+    type Asset = StandardMaterial;
+}
+
+impl FromWorld for HandleMap<MaterialKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (MaterialKey::Red,asset_server.add(StandardMaterial::from_color(Color::srgb(1.0, 0.0, 0.0)))),
+            (MaterialKey::Green,asset_server.add(StandardMaterial::from_color(Color::srgb(0.0, 1.0, 0.2)))),
+            (MaterialKey::Blue,asset_server.add(StandardMaterial::from_color(Color::srgb(1.0, 0.0, 1.0))))
+
+        ]
+        .into()
+    }
+}
+
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum MeshKey {
+    Capsule,
+    Floor,
+    Wall,
+}
+
+impl AssetKey for MeshKey {
+    type Asset = Mesh;
+}
+
+impl FromWorld for HandleMap<MeshKey> {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.resource::<AssetServer>();
+        [
+            (MeshKey::Capsule,asset_server.add(Capsule3d::default().into())),
+            (MeshKey::Floor,asset_server.add(Plane3d::new(*Dir3::Y,Vec2::new(20.0,20.0)).into())),
+            (MeshKey::Wall,asset_server.add(Cuboid::from_length(2.0).into())),
+        ]
+        .into()
+    }
+}
+
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum ImageKey {
@@ -95,7 +174,7 @@ impl FromWorld for HandleMap<SoundtrackKey> {
             ),
             (
                 SoundtrackKey::Gameplay,
-                asset_server.load("audio/soundtracks/Fluffing A Duck.ogg"),
+                asset_server.load("audio/soundtracks/myheart.ogg"),
             ),
         ]
         .into()

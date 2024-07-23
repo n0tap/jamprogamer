@@ -6,7 +6,9 @@ use bevy::prelude::*;
 
 pub mod level;
 pub mod player;
+pub mod stage;
+
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((level::plugin, player::plugin));
+    app.add_plugins((level::plugin, player::plugin, stage::plugin));
 }

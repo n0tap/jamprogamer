@@ -5,6 +5,7 @@ mod loading;
 mod playing;
 mod splash;
 mod title;
+mod gaming;
 
 use bevy::prelude::*;
 
@@ -18,6 +19,7 @@ pub(super) fn plugin(app: &mut App) {
         title::plugin,
         credits::plugin,
         playing::plugin,
+        gaming::plugin,
     ));
 }
 
@@ -30,4 +32,5 @@ pub enum Screen {
     Title,
     Credits,
     Playing,
+    Gaming,
 }

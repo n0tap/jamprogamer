@@ -11,49 +11,49 @@ use bevy::prelude::*;
 use super::{audio::sfx::PlaySfx, movement::MovementController};
 use crate::AppSet;
 
-pub(super) fn plugin(app: &mut App) {
-    // Animate and play sound effects based on controls.
-    app.register_type::<PlayerAnimation>();
-    app.add_systems(
-        Update,
-        (
-            update_animation_timer.in_set(AppSet::TickTimers),
-            (
-                update_animation_movement,
-                update_animation_atlas,
-                trigger_step_sfx,
-            )
-                .chain()
-                .in_set(AppSet::Update),
-        ),
-    );
-}
+//pub(super) fn plugin(app: &mut App) {
+//    // Animate and play sound effects based on controls.
+//    app.register_type::<PlayerAnimation>();
+//    app.add_systems(
+//        Update,
+//        (
+//            update_animation_timer.in_set(AppSet::TickTimers),
+//            (
+//                update_animation_movement,
+//                update_animation_atlas,
+//                trigger_step_sfx,
+//            )
+//                .chain()
+//                .in_set(AppSet::Update),
+//        ),
+//    );
+//}
 
 /// Update the sprite direction and animation state (idling/walking).
-fn update_animation_movement(
-    mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation)>,
-) {
-    for (controller, mut sprite, mut animation) in &mut player_query {
-        let dx = controller.0.x;
-        if dx != 0.0 {
-            sprite.flip_x = dx < 0.0;
-        }
-
-        let animation_state = if controller.0 == Vec2::ZERO {
-            PlayerAnimationState::Idling
-        } else {
-            PlayerAnimationState::Walking
-        };
-        animation.update_state(animation_state);
-    }
-}
+//fn update_animation_movement(
+//    mut player_query: Query<(&MovementController, &mut Sprite, &mut PlayerAnimation)>,
+//) {
+//    for (controller, mut sprite, mut animation) in &mut player_query {
+//        let dx = controller.0.x;
+//        if dx != 0.0 {
+//            sprite.flip_x = dx < 0.0;
+//        }
+//
+//        let animation_state = if controller.0 == Vec3::ZERO {
+//            PlayerAnimationState::Idling
+//        } else {
+//            PlayerAnimationState::Walking
+//        };
+//        animation.update_state(animation_state);
+//    }
+//}
 
 /// Update the animation timer.
-fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
-    for mut animation in &mut query {
-        animation.update_timer(time.delta());
-    }
-}
+//fn update_animation_timer(time: Res<Time>, mut query: Query<&mut PlayerAnimation>) {
+//    for mut animation in &mut query {
+//        animation.update_timer(time.delta());
+//    }
+//}
 
 /// Update the texture atlas to reflect changes in the animation.
 fn update_animation_atlas(mut query: Query<(&PlayerAnimation, &mut TextureAtlas)>) {
