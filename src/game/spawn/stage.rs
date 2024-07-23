@@ -1,9 +1,9 @@
-use bevy::{prelude::*, scene::ron::de};
+use bevy::prelude::*;
 
 use crate::{
     game::{
-        assets::{HandleMap, ImageKey, MeshKey,MaterialKey,SceneKey},
-        movement::{Movement, MovementController,NPC,Path,Timeloop},
+        assets::{HandleMap, MeshKey,MaterialKey,SceneKey},
+        movement::{NPC,Path,Timeloop},
     },
     screen::Screen,
     
@@ -45,7 +45,7 @@ fn spawn_stage(
         Name::new("Light"),
         DirectionalLightBundle{
             directional_light:DirectionalLight{
-                color:Color::rgb(1.0,1.0,1.0),
+                color:Color::srgb(1.0,1.0,1.0),
                 illuminance:1000.0,
                 shadows_enabled:false,
                 

@@ -6,20 +6,18 @@
 use core::f32;
 use std::f32::consts::PI;
 
-use bevy::{prelude::*, };
+use bevy::prelude::*;
 
 use crate::{
     game::{
         spawn::player::Player,
         spawn::stage::Wall,
-        assets::{HandleMap, ImageKey, MeshKey,MaterialKey,SceneKey},
     },
     screen::Screen,
     
 };
 use crate::AppSet;
 
-use super::spawn::player;
 
 
 
@@ -32,7 +30,7 @@ pub(super) fn plugin(app: &mut App) {
     );
 
     // Apply movement based on controls.
-    app.register_type::<(Movement)>();
+    app.register_type::<Movement>();
     app.add_systems(
         Update,
         (apply_movement)
@@ -172,7 +170,7 @@ pub fn move_npcs(
         let mut nex_point = path.points.first().expect("first empty");
         let mut prev_point = path.points.last().expect("last empty");
         for (i,i_point) in path.points.iter().enumerate(){
-            if (timeloop.current_time < i_point.0) {
+            if timeloop.current_time < i_point.0 {
                 nex_point = i_point;
                 prev_point = match i==0{
                     true=>path.points.last().expect("last fuckin empty bruv"),
@@ -181,10 +179,10 @@ pub fn move_npcs(
                 break;
             }
         }
-        let mut diff = (nex_point.0-prev_point.0);
+        let mut diff = nex_point.0-prev_point.0;
         if diff<0.0{diff= timeloop.max_time+nex_point.0-prev_point.0;}
         let point_diff = nex_point.1-prev_point.1;
-        let mut time_since_prev = (timeloop.current_time-prev_point.0);
+        let mut time_since_prev = timeloop.current_time-prev_point.0;
         if time_since_prev < 0.0{time_since_prev +=timeloop.max_time};
         transform.translation = prev_point.1 + point_diff*time_since_prev/diff;
         
@@ -197,8 +195,8 @@ pub fn kill_npcs(
     player: Query<(&Player,&Transform)>,
     mut commands:Commands,
 ){
-    for (player,playertransform) in player.iter(){
-        for (mut isdead,mut  enemytransform,entity) in npcs.iter(){
+    for (_,playertransform) in player.iter(){
+        for (_, enemytransform,entity) in npcs.iter(){
             let diff = enemytransform.translation-playertransform.translation;
             if diff.length()<1.0{
                 commands.entity(entity).insert(IsDead);
@@ -215,9 +213,9 @@ pub fn rotate_dead(
 }
 
 fn line_collision(a:Vec3,b:Vec3,c:Vec3,d:Vec3)->bool{
-    let uA = ((d.x-c.x)*(a.z-c.z) - (d.z-c.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
-    let uB = ((b.x-a.x)*(a.z-c.z) - (b.z-a.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
-    if uA>=0.0&&uA<=1.0&&uB>=0.0&&uB<=1.0{return true;}
+    let u_a = ((d.x-c.x)*(a.z-c.z) - (d.z-c.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
+    let u_b = ((b.x-a.x)*(a.z-c.z) - (b.z-a.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
+    if u_a>=0.0&&u_a<=1.0&&u_b>=0.0&&u_b<=1.0{return true;}
     return false;
 }
 
