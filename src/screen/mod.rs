@@ -2,10 +2,10 @@
 
 mod credits;
 mod loading;
+mod gaming;
 mod playing;
 mod splash;
 mod title;
-mod gaming;
 
 use bevy::prelude::*;
 
