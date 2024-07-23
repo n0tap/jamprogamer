@@ -4,8 +4,7 @@ use bevy::{dev_tools::states::log_transitions, prelude::*};
 
 use crate::screen::Screen;
 
-#[cfg(feature = "dev")]
-use bevy_inspector_egui;
+
 //#[cfg(feature = "dev")]
 //use bevy_inspector_egui::quick::WorldInspectorPlugin;
 #[cfg(feature = "dev")]
