@@ -132,7 +132,7 @@ fn apply_movement(
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
-pub struct NPC;
+pub struct Npc;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
@@ -191,7 +191,7 @@ pub fn move_npcs(
 }
 
 pub fn kill_npcs(
-    npcs:Query<(&NPC,&Transform,Entity)>,
+    npcs:Query<(&Npc,&Transform,Entity)>,
     player: Query<(&Player,&Transform)>,
     mut commands:Commands,
 ){
@@ -215,12 +215,12 @@ pub fn rotate_dead(
 fn line_collision(a:Vec3,b:Vec3,c:Vec3,d:Vec3)->bool{
     let u_a = ((d.x-c.x)*(a.z-c.z) - (d.z-c.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
     let u_b = ((b.x-a.x)*(a.z-c.z) - (b.z-a.z)*(a.x-c.x)) / ((d.z-c.z)*(b.x-a.x) - (d.x-c.x)*(b.z-a.z));
-    if u_a>=0.0&&u_a<=1.0&&u_b>=0.0&&u_b<=1.0{return true;}
-    return false;
+    if (0.0..=1.0).contains(&u_a)&&(0.0..=1.0).contains(&u_b){return true;}
+    false
 }
 
 pub fn detect_player(
-    enemies: Query<&Transform,(With<NPC>,Without<IsDead>)>,
+    enemies: Query<&Transform,(With<Npc>,Without<IsDead>)>,
     players: Query<&Transform,With<Player>>,
     walls: Query<&Transform,With<Wall>>,
 ){

@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     game::{
         assets::{HandleMap, MeshKey,MaterialKey,SceneKey},
-        movement::{NPC,Path,Timeloop},
+        movement::{Npc,Path,Timeloop},
     },
     screen::Screen,
     
@@ -65,7 +65,7 @@ fn spawn_stage(
             scene:scene_handles[&SceneKey::Character].clone_weak(),
             ..Default::default()
         },
-        NPC,
+        Npc,
         Path{
             points: vec![
                 (2.0,Vec3::new(1.0,0.0,3.0)),
@@ -81,7 +81,7 @@ fn spawn_stage(
             scene:scene_handles[&SceneKey::Character].clone_weak(),
             ..Default::default()
         },
-        NPC,
+        Npc,
         Path{
             points:vec![
                 (3.0,Vec3::new(1.0,0.0,1.0)),
