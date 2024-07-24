@@ -5,9 +5,7 @@ mod screen;
 mod ui;
 
 use bevy::{
-    asset::AssetMetaCheck,
-    audio::{AudioPlugin, Volume},
-    prelude::*,
+    asset::AssetMetaCheck, audio::{AudioPlugin, Volume}, pbr::ShadowFilteringMethod, prelude::*
 };
 
 pub struct AppPlugin;
@@ -52,6 +50,10 @@ impl Plugin for AppPlugin {
                 }),
         );
 
+        app.insert_resource(AmbientLight{
+            color:Color::srgb(0.0,0.0,0.0),
+            brightness:0.0,
+        });
         // Add other plugins.
         app.add_plugins((game::plugin, screen::plugin, ui::plugin));
 
@@ -80,8 +82,11 @@ fn spawn_camera(mut commands: Commands) {
         Camera3dBundle {
             transform: Transform::from_xyz(-5.7, 20.7,-20.0)
                 .looking_at(Vec3::new(0.0, 0.3, 0.0), Vec3::Y),
+            
             ..default()
         },
+        ShadowFilteringMethod::Hardware2x2,
+
         // Render all UI to this camera.
         // Not strictly necessary since we only use one camera,
         // but if we don't use this component, our UI will disappear as soon

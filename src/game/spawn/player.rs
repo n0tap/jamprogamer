@@ -22,10 +22,16 @@ pub struct SpawnPlayer;
 #[reflect(Component)]
 pub struct Player;
 
+//#[derive(Component, Debug, Clone, Copy, PartialEq, Default, Reflect)]
+//#[reflect(Component)]
+//pub struct CameraPosition{
+//    player:Vec3,
+//}
+
 fn spawn_player(
     _trigger: Trigger<SpawnPlayer>,
     mut commands: Commands,
-
+ //   camera:Query<Entity,With<Camera3d>>,
     scene_handles: Res<HandleMap<SceneKey>>,
 ) {
     // A texture atlas is a way to split one image with a grid into multiple sprites.
@@ -46,5 +52,24 @@ fn spawn_player(
         Movement { speed: 2.8, rotation:3.0 },
         StateScoped(Screen::Playing),
         Player,
+    )).with_children( |child_builder|   {
+        child_builder.spawn((Name::new("Light"),
+            PointLightBundle{
+                point_light:PointLight{
+                    color:Color::srgb(1.0,1.0,1.0),
+                    intensity:10000000.0,
+                    shadows_enabled:true,
+                    range:50.0,
+                    ..Default::default()
+                },
+                transform:Transform::from_translation(Vec3::new(0.0,5.7,0.0)),
+                ..Default::default()
+
+
+        },
+        StateScoped(Screen::Playing),
     ));
+    });
+
+    //commands.entity(camera.single()).insert(CameraPosition{player:Vec3::new(-5.7, 20.7,-20.0)});
 }

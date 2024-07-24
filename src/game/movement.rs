@@ -41,6 +41,10 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<Path>();
     app.register_type::<Timeloop>();
     app.register_type::<IsDead>();
+    app.register_type::<IsShooting>();
+    app.register_type::<IsGoingToHell>();
+
+
 
     app.add_systems(Update, (
         loop_time.run_if(in_state(Screen::Playing)),
@@ -48,6 +52,7 @@ pub(super) fn plugin(app: &mut App) {
         kill_npcs.run_if(in_state(Screen::Playing)),
         rotate_dead.run_if(in_state(Screen::Playing)),
         detect_player.run_if(in_state(Screen::Playing)),
+        go_to_hell.run_if(in_state(Screen::Playing)),
 
     ));
 }
@@ -108,15 +113,18 @@ pub struct Movement {
 //}
 fn apply_movement(
     time: Res<Time>,
-    mut movement_query: Query<(&MovementController, &Movement, &mut Transform),Without<Wall>>,
-    wall_query: Query<&Transform,With<Wall>>
+    mut movement_query: Query<(&MovementController, &Movement, &mut Transform),(Without<Wall>,Without<IsDead>)>,
+    wall_query: Query<&Transform,With<Wall>>,
+    mut camera:Query<&mut Transform,(With<Camera3d>,Without<Wall>,Without<Movement>)>
 ) {
-    for (controller, movement, mut transform) in &mut movement_query {
-        let torque = movement.rotation * controller.0.x;
-        transform.rotate(Quat::from_axis_angle(Vec3::Y,torque*time.delta_seconds()));
-        let velocity = movement.speed * controller.0.z;
-        let forward = transform.forward();
-        let new_translation = transform.translation + forward * velocity * time.delta_seconds();
+    for (controller, movement, mut transform) in movement_query.iter_mut() {
+//        let torque = movement.rotation * controller.0.x;
+//        transform.rotate(Quat::from_axis_angle(Vec3::Y,torque*time.delta_seconds()));
+//        let velocity = movement.speed * controller.0.z;
+//        let forward = transform.forward();
+//        let new_translation = transform.translation + forward * velocity * time.delta_seconds();
+        let new_translation = transform.translation+controller.0*movement.speed*time.delta_seconds();
+
         for walltransform in wall_query.iter(){
             if new_translation.x>walltransform.translation.x-walltransform.scale.x &&
                 new_translation.x<walltransform.translation.x+walltransform.scale.x &&
@@ -126,6 +134,11 @@ fn apply_movement(
                 }
         }
         transform.translation = new_translation;
+        if controller.0.length()>0.5{
+            *transform = transform.looking_to(controller.0, Vec3::Y);
+        }
+        let mut cam =camera.single_mut();
+        cam.translation=transform.translation+Vec3::new(-5.7, 20.7,-20.0);
     }
 }
 
@@ -137,6 +150,16 @@ pub struct Npc;
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub struct IsDead;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Default, Reflect)]
+#[reflect(Component)]
+pub struct IsGoingToHell{
+    pub countdown: f32,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
+#[reflect(Component)]
+pub struct IsShooting;
 
 #[derive(Component, Debug, Clone, Default, Reflect)]
 #[reflect(Component)]
@@ -185,6 +208,7 @@ pub fn move_npcs(
         let mut time_since_prev = timeloop.current_time-prev_point.0;
         if time_since_prev < 0.0{time_since_prev +=timeloop.max_time};
         transform.translation = prev_point.1 + point_diff*time_since_prev/diff;
+        *transform = transform.looking_to(point_diff, Vec3::Y);
         
 
     }
@@ -220,12 +244,13 @@ fn line_collision(a:Vec3,b:Vec3,c:Vec3,d:Vec3)->bool{
 }
 
 pub fn detect_player(
-    enemies: Query<&Transform,(With<Npc>,Without<IsDead>)>,
-    players: Query<&Transform,With<Player>>,
+    enemies: Query<(&Transform,Entity),(With<Npc>,Without<IsDead>)>,
+    players: Query<(&Transform,Entity),(With<Player>,Without<IsGoingToHell>)>,
     walls: Query<&Transform,With<Wall>>,
+    mut commands:Commands,
 ){
-    for player in players.iter(){ 
-        for enemy in enemies.iter(){
+    for (player,player_id) in players.iter(){ 
+        for (enemy,enemy_id) in enemies.iter(){
             let diff = player.translation-enemy.translation;
             let angle = diff.angle_between(*enemy.forward());
             if angle < PI/4.0{
@@ -241,7 +266,6 @@ pub fn detect_player(
                         line_collision(enemy.translation, player.translation, wall2, wall3)||
                         line_collision(enemy.translation, player.translation, wall3, wall0)
                         {
-                            println!("te escondistes");
                             is_blocked = true;
                             continue;
                         }
@@ -249,9 +273,26 @@ pub fn detect_player(
 
                 }
                 if !is_blocked{
-                    println!("teveo");
+                    commands.entity(enemy_id).insert(IsShooting);
+                    commands.entity(player_id).insert(IsDead).
+                        insert(IsGoingToHell{countdown:0.5});
                 }
             }
+        }
+    }
+}
+
+pub fn go_to_hell(
+    mut next_screen: ResMut<NextState<Screen>>,
+    mut deadman:Query<&mut IsGoingToHell>,
+    time: Res<Time<Virtual>>,
+){
+    for mut hell in deadman.iter_mut(){
+        if hell.countdown >0.0{
+            hell.countdown -= time.delta_seconds();
+        }
+        else{
+            next_screen.set(Screen::Hell);
         }
     }
 }

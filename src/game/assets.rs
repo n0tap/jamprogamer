@@ -97,6 +97,7 @@ impl FromWorld for HandleMap<MeshKey> {
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum ImageKey {
     Ducky,
+    Black,
 }
 
 impl AssetKey for ImageKey {
@@ -113,6 +114,12 @@ impl FromWorld for HandleMap<ImageKey> {
                 |settings: &mut ImageLoaderSettings| {
                     settings.sampler = ImageSampler::nearest();
                 },
+            ),
+        ),
+        (
+            ImageKey::Black,
+            asset_server.load(
+                "images/black.png"
             ),
         )]
         .into()
