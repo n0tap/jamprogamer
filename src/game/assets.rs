@@ -22,8 +22,78 @@ pub(super) fn plugin(app: &mut App) {
 
     app.register_type::<HandleMap<SceneKey>>();
     app.init_resource::<HandleMap<SceneKey>>();
+
+    app.register_type::<HandleMap<GraphKey>>();
+    app.init_resource::<HandleMap<GraphKey>>();
+
+    app.register_type::<Animations>();
+    app.register_type::<Action>();
+
+
+}
+#[derive(Component, Clone, Copy, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
+pub struct Action{
+    pub current_track:NlaTrack,
+    pub new_track:NlaTrack,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum NlaTrack{
+    Walk,
+    Idle,
+    Shoot,
+    Die,
+    Punch
+}
+
+#[derive(Resource,Reflect)]
+pub struct Animations{
+    pub animations:Vec<AnimationNodeIndex>,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
+pub enum GraphKey {
+    Character,
+}
+
+impl AssetKey for GraphKey {
+    type Asset = AnimationGraph;
+}
+
+impl FromWorld for HandleMap<GraphKey> {
+    fn from_world(world: &mut World) -> Self {
+        let mut graph = AnimationGraph::new();
+
+        let asset_server: &AssetServer = world.resource::<AssetServer>();
+        let animations:Vec<AnimationNodeIndex> = graph.add_clips([
+            GltfAssetLabel::Animation(0).from_asset("meshes/jamchar3.glb"),
+            GltfAssetLabel::Animation(1).from_asset("meshes/jamchar3.glb"),
+            GltfAssetLabel::Animation(2).from_asset("meshes/jamchar3.glb"),
+            GltfAssetLabel::Animation(3).from_asset("meshes/jamchar3.glb"),
+            GltfAssetLabel::Animation(4).from_asset("meshes/jamchar3.glb"),
+
+
+        ]            
+        .into_iter()
+        .map(|path| asset_server.load(path)),
+        1.0,
+        graph.root,
+        ).collect();
+//        let asset_server = {};
+        let mut commands = world.commands();
+        commands.insert_resource(Animations {
+            animations,});
+
+        let asset_server: &AssetServer = world.resource::<AssetServer>();
+
+        [
+            (GraphKey::Character,asset_server.add(graph)),
+
+        ]
+        .into()
+    }
+}
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Reflect)]
 pub enum SceneKey {
@@ -38,7 +108,7 @@ impl FromWorld for HandleMap<SceneKey> {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
         [
-            (SceneKey::Character,asset_server.load(GltfAssetLabel::Scene(0).from_asset("meshes/jamchar.glb")))
+            (SceneKey::Character,asset_server.load(GltfAssetLabel::Scene(0).from_asset("meshes/jamchar3.glb")))
 
         ]
         .into()
@@ -211,3 +281,4 @@ impl<K: AssetKey> HandleMap<K> {
             .all(|x| asset_server.is_loaded_with_dependencies(x))
     }
 }
+

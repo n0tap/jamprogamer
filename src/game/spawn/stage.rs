@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{
     prelude::*,
 //    core_pipeline::Skybox,
@@ -5,10 +7,10 @@ use bevy::{
 
 use crate::{
     game::{
-        assets::{HandleMap, MeshKey,MaterialKey,SceneKey,
+        assets::{Action, Animations, GraphKey, HandleMap, MaterialKey, MeshKey, SceneKey,NlaTrack
 //            ImageKey
         },
-        movement::{Npc,Path,Timeloop},
+        movement::{GhostPath, Npc, Path, Timeloop},
     },
     screen::Screen,
     
@@ -18,7 +20,9 @@ pub(super) fn plugin(app: &mut App) {
 
     app.observe(spawn_stage);
     app.register_type::<Wall>();
-
+    app.add_systems(Update,setup_scene_once_loaded.run_if(in_state(Screen::Playing)));
+    app.init_resource::<GhostPath>();
+    app.init_resource::<Timeloop>();
 }
 
 #[derive(Event, Debug)]
@@ -56,6 +60,10 @@ fn spawn_stage(
 
     commands.spawn((
         Name::new("Enemy"),
+        Action{
+            current_track:NlaTrack::Idle,
+            new_track:NlaTrack::Walk,
+        },
         SceneBundle{
             scene:scene_handles[&SceneKey::Character].clone_weak(),
             ..Default::default()
@@ -72,6 +80,10 @@ fn spawn_stage(
     ));
     commands.spawn((
         Name::new("Enemy2"),
+        Action{
+            current_track:NlaTrack::Idle,
+            new_track:NlaTrack::Walk,
+        },
         SceneBundle{
             scene:scene_handles[&SceneKey::Character].clone_weak(),
             ..Default::default()
@@ -91,7 +103,10 @@ fn spawn_stage(
     commands.insert_resource(Timeloop{
         current_time:0.0,
         max_time:20.0,
+        gen:0,
     });
+    commands.insert_resource(GhostPath{points:vec![(0.0,Vec3::ZERO)]});
+
 
 //WALLS    
     commands.spawn((
@@ -150,3 +165,40 @@ fn spawn_stage(
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Default, Reflect)]
 #[reflect(Component)]
 pub struct Wall;
+
+fn setup_scene_once_loaded(
+    mut commands: Commands,
+    animations: Res<Animations>,
+    mut players: Query<(Entity, &mut AnimationPlayer), Added<AnimationPlayer>>,
+    graph_handles: Res<HandleMap<GraphKey>>,
+
+) {
+    for (entity, mut player) in &mut players {
+        let mut transitions = AnimationTransitions::new();
+
+        // Make sure to start the animation via the `AnimationTransitions`
+        // component. The `AnimationTransitions` component wants to manage all
+        // the animations and will get confused if the animations are started
+        // directly via the `AnimationPlayer`.
+        transitions
+            .play(&mut player, animations.animations[0], Duration::ZERO)
+            .repeat();
+
+        commands
+            .entity(entity)
+            .insert(graph_handles[&GraphKey::Character].clone())
+            .insert(transitions);
+    }
+}
+
+impl FromWorld for GhostPath {
+    fn from_world(_: &mut World) -> Self {
+        GhostPath{points:vec![(0.0,Vec3::ZERO)]}
+    }
+}
+impl FromWorld for Timeloop {
+    fn from_world(_: &mut World) -> Self {
+        Timeloop { current_time: 0.0, max_time: 0.0, r#gen: 0 }
+    }
+
+}

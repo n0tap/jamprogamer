@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::{
     game::{
-        assets::{HandleMap,SceneKey},
+        assets::{HandleMap,SceneKey,Action,NlaTrack},
         movement::{Movement, MovementController},
     },
     screen::Screen,
@@ -49,7 +49,11 @@ fn spawn_player(
             ..Default::default()
         },
         MovementController::default(),
-        Movement { speed: 2.8, rotation:3.0 },
+        Movement { speed: 5.5, rotation:3.0 },
+        Action{
+            current_track:NlaTrack::Idle,
+            new_track:NlaTrack::Idle,
+        },
         StateScoped(Screen::Playing),
         Player,
     )).with_children( |child_builder|   {
@@ -62,7 +66,7 @@ fn spawn_player(
                     range:50.0,
                     ..Default::default()
                 },
-                transform:Transform::from_translation(Vec3::new(0.0,5.7,0.0)),
+                transform:Transform::from_translation(Vec3::new(0.0,7.5,0.0)),
                 ..Default::default()
 
 
