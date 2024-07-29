@@ -45,7 +45,7 @@ fn spawn_player(
         Name::new("Player"),
         SceneBundle{
             scene:scene_handles[&SceneKey::Character].clone_weak(),
-            transform:Transform::from_translation(Vec3::new(-2.0,0.0,-2.0)),
+            transform:Transform::from_translation(Vec3::new(-0.0,0.0,-0.0)),
             ..Default::default()
         },
         MovementController::default(),
@@ -66,7 +66,7 @@ fn spawn_player(
                     range:50.0,
                     ..Default::default()
                 },
-                transform:Transform::from_translation(Vec3::new(0.0,7.5,0.0)),
+                transform:Transform::from_translation(Vec3::new(0.0,6.0,0.0)),
                 ..Default::default()
 
 

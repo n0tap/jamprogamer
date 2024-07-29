@@ -156,7 +156,7 @@ impl FromWorld for HandleMap<MeshKey> {
         let asset_server = world.resource::<AssetServer>();
         [
             (MeshKey::Capsule,asset_server.add(Capsule3d::default().into())),
-            (MeshKey::Floor,asset_server.add(Plane3d::new(*Dir3::Y,Vec2::new(20.0,20.0)).into())),
+            (MeshKey::Floor,asset_server.add(Plane3d::new(*Dir3::Y,Vec2::new(200.0,200.0)).into())),
             (MeshKey::Wall,asset_server.add(Cuboid::from_length(2.0).into())),
         ]
         .into()

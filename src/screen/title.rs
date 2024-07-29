@@ -27,7 +27,7 @@ fn enter_title(mut commands: Commands) {
         .ui_root()
         .insert(StateScoped(Screen::Title))
         .with_children(|children| {
-            children.button("Play").insert(TitleAction::Play);
+            children.button("kill everyone( not you ))").insert(TitleAction::Play);
             children.button("Credits").insert(TitleAction::Credits);
 
             #[cfg(not(target_family = "wasm"))]

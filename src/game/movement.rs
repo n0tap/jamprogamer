@@ -18,7 +18,7 @@ use crate::{
 };
 use crate::AppSet;
 
-use super::assets::{Action, Animations,NlaTrack,HandleMap,SceneKey};
+use super::{assets::{Action, Animations, HandleMap, NlaTrack, SceneKey}, spawn::stage::Furnace};
 
 
 
@@ -53,11 +53,15 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, (
         loop_time.run_if(in_state(Screen::Playing)),
         move_npcs.run_if(in_state(Screen::Playing)),
-        kill_npcs.run_if(in_state(Screen::Playing)),
-        detect_player.run_if(in_state(Screen::Playing)),
+        kill_npcs.run_if(in_state(Screen::Playing)).after(move_npcs),
+        detect_player.run_if(in_state(Screen::Playing)).after(move_npcs),
         go_to_hell.run_if(in_state(Screen::Playing)),
         animate.run_if(in_state(Screen::Playing)),
         move_ghosts.run_if(in_state(Screen::Playing)),
+        furnaceloop.run_if(in_state(Screen::Playing)),
+        light_furnaces.run_if(in_state(Screen::Playing)),
+        win.run_if(in_state(Screen::Playing)),
+
 
     ));
 }
@@ -147,7 +151,7 @@ fn apply_movement(
             action.new_track = NlaTrack::Walk;
             let new_rotation = transform.looking_to(controller.0, Vec3::Y);
             if new_rotation.rotation.angle_between(transform.rotation) >PI/10.0{
-                ghostpath.points.push((timeloop.current_time,transform.translation));
+                ghostpath.points.push((timeloop.current_time+f32::from(timeloop.gen)*timeloop.max_time,transform.translation));
             }
             *transform = new_rotation;
         }
@@ -212,17 +216,23 @@ pub fn loop_time(
     timeloop.current_time += time.delta_seconds();
     if timeloop.current_time>timeloop.max_time{
         timeloop.current_time %= timeloop.max_time;
+
         commands.spawn((
             Name::new("Ghost"),
             SceneBundle{
                 scene:scene_handles[&SceneKey::Character].clone_weak(),
                 ..Default::default()
             },
+            Action{
+                current_track:NlaTrack::Idle,
+                new_track:NlaTrack::Walk,
+            },
             Npc,
             Ghost{gen: timeloop.gen},
             StateScoped(Screen::Playing),
         ));
         timeloop.gen += 1;
+
     }
     
 }
@@ -246,9 +256,9 @@ pub fn move_ghosts(
             }
         }
         let mut diff = nex_point.0-prev_point.0;
-        if diff<0.0{diff= timeloop.max_time+nex_point.0-prev_point.0;}
+        if diff<0.0{diff= (timeloop.current_time + f32::from(ghost.gen) *timeloop.max_time)+nex_point.0-prev_point.0;}
         let point_diff = nex_point.1-prev_point.1;
-        let mut time_since_prev = timeloop.current_time-prev_point.0;
+        let mut time_since_prev = (timeloop.current_time + f32::from(ghost.gen) *timeloop.max_time)-prev_point.0;
         if time_since_prev < 0.0{time_since_prev +=timeloop.max_time};
         transform.translation = prev_point.1 + point_diff*time_since_prev/diff;
         *transform = transform.looking_to(point_diff, Vec3::Y);
@@ -287,15 +297,16 @@ pub fn move_npcs(
 }
 
 pub fn kill_npcs(
-    npcs:Query<(&Npc,&Transform,Entity)>,
+    mut npcs:Query<(&Npc,&Transform,Entity,&mut Action)>,
     player: Query<(&Player,&Transform)>,
     mut commands:Commands,
 ){
     for (_,playertransform) in player.iter(){
-        for (_, enemytransform,entity) in npcs.iter(){
+        for (_, enemytransform,entity,mut action) in npcs.iter_mut(){
             let diff = enemytransform.translation-playertransform.translation;
             if diff.length()<1.0{
                 commands.entity(entity).insert(IsDead);
+                action.new_track = NlaTrack::Die;
             }
         }
     }
@@ -316,8 +327,8 @@ fn line_collision(a:Vec3,b:Vec3,c:Vec3,d:Vec3)->bool{
 }
 
 pub fn detect_player(
-    players: Query<(&Transform,Entity,&Player),(Without<IsGoingToHell>,Without<Npc>,Without<Wall>)>,
-    mut enemies: Query<(&mut Transform,Entity,&mut Action, &Npc),(Without<IsDead>,Without<Player>,Without<Wall>)>,
+    players: Query<(&Transform,Entity,&Player),(Without<IsGoingToHell>,Without<Npc>,Without<Wall>,Without<IsDead>)>,
+    mut enemies: Query<(&mut Transform,Entity,&mut Action, &Npc),(Without<IsDead>,Without<Player>,Without<Wall>,Without<IsShooting>)>,
     walls: Query<&Transform,(With<Wall>,Without <Player>,Without<Npc>)>,
     mut commands:Commands,
 ){
@@ -349,7 +360,7 @@ pub fn detect_player(
                     commands.entity(enemy_id).insert(IsShooting);
                     *enemy = enemy.looking_at(player.translation, Vec3::Y);
                     commands.entity(player_id).insert(IsDead).
-                        insert(IsGoingToHell{countdown:0.5});
+                        insert(IsGoingToHell{countdown:0.7});
                     action.new_track = NlaTrack::Shoot;
                 }
             }
@@ -368,6 +379,34 @@ pub fn go_to_hell(
             hell.countdown -= time.delta_seconds();
         }
         else{
+            next_screen.set(Screen::Hell);
+        }
+    }
+}
+
+fn light_furnaces(
+    mut lights: Query<(&mut PointLight,&Furnace)>,
+){
+    for (mut light,coal) in lights.iter_mut(){
+        light.intensity= f32::powf(1.8, coal.countdown);
+    }
+}
+
+fn furnaceloop(
+    mut furnaces : Query<(&mut Furnace,&Transform)>,
+    characters: Query<(&Transform,AnyOf<(&Player,&Npc,&Ghost)>)>,
+    time: Res<Time<Virtual>>,
+    mut next_screen: ResMut<NextState<Screen>>,
+
+){
+    for (mut temperature, furnace) in furnaces.iter_mut(){
+        for (character,_) in characters.iter(){
+            if character.translation.distance(furnace.translation) < 3.0{
+                temperature.countdown = 0.0;
+            }
+        }
+        temperature.countdown += time.delta_seconds();
+        if temperature.countdown > 45.0{
             next_screen.set(Screen::Hell);
         }
     }
@@ -395,15 +434,37 @@ fn animate(
                 NlaTrack::Idle=>3,
                 NlaTrack::Die=>4,
             };
-            transitions
-            .play(
-                &mut player,
-                animations.animations[chosen_action],
-                Duration::ZERO,
-            )
-            .repeat();
+            if chosen_action != 1{
+                transitions
+                .play(
+                    &mut player,
+                    animations.animations[chosen_action],
+                    Duration::ZERO,
+                );
+            }
+            else{
+                transitions
+                .play(
+                    &mut player,
+                    animations.animations[chosen_action],
+                    Duration::ZERO,
+                ).repeat();
+            }
         }
     }
 
 }
 
+fn win(
+    badguys: Query<&Npc,(Without<IsDead>,Without<Ghost>)>,
+    mut next_screen: ResMut<NextState<Screen>>,
+
+){
+   let mut i = 0;
+    for _ in badguys.iter(){
+        i+=1;
+    }
+    if i == 0{
+        next_screen.set(Screen::Win);
+    }
+}
