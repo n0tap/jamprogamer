@@ -85,8 +85,7 @@ fn spawn_camera(mut commands: Commands) {
             
             ..default()
         },
-        ShadowFilteringMethod::Hardware2x2,
-
+        
         // Render all UI to this camera.
         // Not strictly necessary since we only use one camera,
         // but if we don't use this component, our UI will disappear as soon
